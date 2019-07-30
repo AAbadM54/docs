@@ -13,90 +13,7 @@ The base URL for all calls to the share API is: _<owncloud_base_url>/ocs/v1.php/
 
 === Get All Shares
 
-Get all shares from the user.
-
-* Syntax: /shares
-* Method: GET
-
-[cols=",,",options="header",]
-|==========================
-| Attribute | Type | Description
-| `shared_with_me` | boolean | Returns all shares shared with the sharee.
-|==========================
-
-==== Returns
-
-XML with all shares
-
-==== Status Codes
-
-[cols=",",options="header",]
-|==========================
-| Code | Description
-| 100 | Successful
-| 404 | Couldn't fetch shares
-| 997 | Unauthorised
-|==========================
-
-==== Code Example
-
-[tabs]
-====
-Curl::
-+
---
-[source,console]
-----
-include::{examplesdir}core/scripts/curl/list-all-shares.sh[]
-----
---
-PHP::
-+
---
-[source,php]
-----
-include::{examplesdir}core/scripts/php/list-all-shares.php[]
-----
---
-Ruby::
-+
---
-[source,ruby]
-----
-include::{examplesdir}core/scripts/ruby/list-all-shares.rb[]
-----
---
-Go::
-+
---
-[source,go]
-----
-include::{examplesdir}core/scripts/go/list-all-shares.go[]
-----
---
-====
-
-==== Example Request Response Payloads
-
-If the user that you're connecting with is not authorized, then you will
-see output similar to the following:
-
-[source,xml]
-----
-include::{examplesdir}core/scripts/responses/not-authorised-response.xml[]
-----
-
-If the user that you're connecting with is authorized, then you will see
-output similar to the following:
-
-[source,xml]
-----
-include::{examplesdir}core/scripts/responses/shares/get-all-shares-success-no-shares.xml[]
-----
-
-=== Get Shares From A Specific File Or Folder
-
-Get all shares from a given file or folder.
+Get all shares shared with a user.
 
 * Syntax: /shares
 * Method: GET
@@ -111,15 +28,17 @@ Get all shares from a given file or folder.
 
 |`format`
 |string
-|sets the output format of the response. Default value is xml. Available options are `xml` and `json`.
+|sets the output format of the response. 
+Default value is `xml`. 
+Available options are `xml` and `json`.
 
 |`path` 
 |string 
-|path to file/folder
+|limit the shares to those in a specific path.
 
 |`reshares` 
 |boolean 
-|returns not only the shares from the current user but all shares from the given file.
+|returns not only the shares shared with the current user but all shares.
 
 |`shared_with_me`
 |string
@@ -137,9 +56,52 @@ NOTE: `declined` and `rejected` are interchangeable.
 |`subfiles` 
 |boolean 
 |returns all shares within a folder, given that path defines a folder.
+This option requires the path option to be specified.
 |===
 
-Mandatory fields: path
+==== Status Codes
+
+[cols=",",options="header",]
+|===
+| Code | Description
+| 100 | Successful.
+| 400 | Not a directory (if the `subfile' argument was used).
+| 404 | Couldn't fetch shares or file doesn't exist.
+| 997 | Unauthorised.
+|===
+
+==== Example Request Response Payloads
+
+If the user that you're connecting with is not authorized, then you will see output similar to the following:
+
+[source,xml]
+----
+include::{examplesdir}core/scripts/responses/not-authorised-response.xml[]
+----
+
+If the user that you're connecting with _is_ authorized, then you will see output similar to the following:
+
+[source,xml]
+----
+include::{examplesdir}core/scripts/responses/shares/get-all-shares-success-no-shares.xml[]
+----
+
+[source,xml]
+----
+include::{examplesdir}core/scripts/responses/shares/list-share-details-failure.xml[]
+----
+
+.Files shared with the current user in XML format.
+[source,xml]
+----
+include::{examplesdir}core/scripts/responses/shares/list-share-details-success.xml[]
+----
+
+.Files shared with the current user in JSON format.
+[source,json]
+----
+include::{examplesdir}core/scripts/responses/shares/list-share-details-success.json[]
+----
 
 ==== Code Example
 
@@ -178,32 +140,6 @@ include::{examplesdir}core/scripts/go/list-share-details.go[]
 ----
 --
 ====
-
-==== Example Request Response Payloads
-
-Failure
-
-[source,xml]
-----
-include::{examplesdir}core/scripts/responses/shares/list-share-details-failure.xml[]
-----
-
-Success
-
-[source,xml]
-----
-include::{examplesdir}core/scripts/responses/shares/list-share-details-success.xml[]
-----
-
-==== Status Codes
-
-[cols=",",options="header",]
-|=========================================================
-| Code | Description
-| 100 | Successful
-| 400 | Not a directory (if the `subfile' argument was used)
-| 404 | File doesn't exist
-|=========================================================
 
 === Get Information About A Known Share
 
@@ -306,6 +242,243 @@ include::{examplesdir}core/scripts/responses/shares/get-share-info-success.xml[]
 ==== Response Attributes
 
 For details about the elements in the XML response payload please refer to the Response Attributes section of xref:response-attributes-1[the Create a New Share section] below.
+
+=== Accept a Pending Share
+
+* Syntax: `/shares/<share_id>`
+* Method: POST
+
+==== Request Attributes
+
+[cols="20%,15%,65%",options="header",]
+|===
+|Attribute 
+|Type 
+|Description
+
+|share id
+|integer
+|the id of the pending share to accept. 
+Pending share ids are available in xref:get-all-shares[the get all shares response].
+|===
+
+==== Status Codes
+
+[cols=",",options="header",]
+|===
+|Code 
+|Description
+
+|200
+a|
+* Pending share successfully accepted.
+* Share doesn't exist.
+|===
+
+==== Example Request Response Payloads
+
+.Pending share was successfully accepted
+[source,xml]
+----
+<?xml version="1.0"?>
+<ocs>
+ <meta>
+  <status>ok</status>
+  <statuscode>100</statuscode>
+  <message/>
+  <totalitems></totalitems>
+  <itemsperpage></itemsperpage>
+ </meta>
+ <data>
+  <element>
+   <id>1</id>
+   <share_type>0</share_type>
+   <uid_owner>testuser</uid_owner>
+   <displayname_owner>test user</displayname_owner>
+   <permissions>19</permissions>
+   <stime>1564484858</stime>
+   <parent/>
+   <expiration/>
+   <token/>
+   <uid_file_owner>testuser</uid_file_owner>
+   <displayname_file_owner>test user</displayname_file_owner>
+   <state>0</state>
+   <path>/ownCloud Manual.pdf</path>
+   <item_type>file</item_type>
+   <mimetype>application/pdf</mimetype>
+   <storage_id>shared::/ownCloud Manual.pdf</storage_id>
+   <storage>3</storage>
+   <item_source>97</item_source>
+   <file_source>97</file_source>
+   <file_parent>6</file_parent>
+   <file_target>/ownCloud Manual.pdf</file_target>
+   <share_with>admin</share_with>
+   <share_with_displayname>admin</share_with_displayname>
+   <share_with_additional_info/>
+   <mail_send>0</mail_send>
+   <attributes/>
+  </element>
+ </data>
+</ocs>
+----
+
+.The share id does not exist.
+[source,xml]
+----
+<?xml version="1.0"?>
+<ocs>
+ <meta>
+  <status>failure</status>
+  <statuscode>404</statuscode>
+  <message>Wrong share ID, share doesn't exist</message>
+  <totalitems></totalitems>
+  <itemsperpage></itemsperpage>
+ </meta>
+ <data/>
+</ocs>
+----
+
+==== Code Example
+
+[tabs]
+====
+Curl::
++
+--
+[source,console,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/curl/accept-pending-share.sh[]
+----
+--
+PHP::
++
+--
+[source,php,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/php/accept-pending-share.php[]
+----
+--
+Ruby::
++
+--
+[source,ruby,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/ruby/accept-pending-share.rb[]
+----
+--
+Go::
++
+--
+[source,go,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/go/accept-pending-share.go[]
+----
+--
+====
+
+=== Decline a Pending Share
+
+* Syntax: `/shares/<share_id>`
+* Method: DELETE
+
+==== Request Attributes
+
+[cols="20%,15%,65%",options="header",]
+|===
+|Attribute 
+|Type 
+|Description
+
+|share id
+|integer
+|the id of the pending share to decline. 
+Pending share ids are available in xref:get-all-shares[the get all shares response].
+|===
+
+==== Status Codes
+
+[cols=",",options="header",]
+|===
+|Code 
+|Description
+
+|200
+a|
+* Pending share successfully declined (one or more times).
+* Share doesn't exist.
+|===
+
+==== Example Request Response Payloads
+
+.A pending share is successfully declined.
+[source,xml]
+----
+<?xml version="1.0"?>
+<ocs>
+ <meta>
+  <status>ok</status>
+  <statuscode>100</statuscode>
+  <message/>
+  <totalitems></totalitems>
+  <itemsperpage></itemsperpage>
+ </meta>
+ <data/>
+</ocs>
+----
+
+.The share id does not exist or the pending share has already been declined.
+[source,xml]
+----
+<?xml version="1.0"?>
+<ocs>
+ <meta>
+  <status>failure</status>
+  <statuscode>404</statuscode>
+  <message>Wrong share ID, share doesn't exist</message>
+  <totalitems></totalitems>
+  <itemsperpage></itemsperpage>
+ </meta>
+ <data/>
+</ocs>
+----
+
+==== Code Example
+
+[tabs]
+====
+Curl::
++
+--
+[source,console,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/curl/decline-pending-share.sh[]
+----
+--
+PHP::
++
+--
+[source,php,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/php/decline-pending-share.php[]
+----
+--
+Ruby::
++
+--
+[source,ruby,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/ruby/decline-pending-share.rb[]
+----
+--
+Go::
++
+--
+[source,go,subs="attributes+"]
+----
+include::{examplesdir}core/scripts/go/decline-pending-share.go[]
+----
+--
+====
 
 === Create A New Share
 
